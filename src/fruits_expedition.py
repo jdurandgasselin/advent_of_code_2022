@@ -30,45 +30,45 @@ class ExpeditionLeader:
     def do_some_exploring(self):
         self.report_start()
 
-        # self.calories_lol = self.get_input_lol_of_calories()
-        # self.max_individual_calories = self.find_max_of_calories(self.calories_lol)
-        # self.report_result(
-        #     self.max_individual_calories,
-        #     prefix="The elf with the most calories has a total of",
-        #     suffix="calories."
-        # )
-        # self.max_calories_for_3_top_elves = self.find_max_of_top_3_calories_providers(self.calories_lol)
-        # self.report_result(
-        #     self.max_calories_for_3_top_elves,
-        #     prefix="The top 3 elves with the most calories have a total of",
-        #     suffix=" calories."
-        #
-        # )
-        #
-        # self.rucksacks_inventories = self.get_input_rucksacks_iventory()
-        # self.priority_sum = self.find_priority_sum_of_misplaced_items(self.rucksacks_inventories)
-        # self.report_result(
-        #     self.priority_sum,
-        #     prefix="The sum of the priority of items misplaced in rucksacks is"
-        # )
-        # self.priority_sum_badges = self.find_priority_sum_of_badges_items(self.rucksacks_inventories)
-        # self.report_result(
-        #     self.priority_sum_badges,
-        #     prefix="The sum of the priority of badges items in rucksacks is"
-        # )
-        #
-        # self.pair_section_ranges = self.get_input_cleaning_duty_sections_assignments()
-        # self.n_redundant_assignments = self.find_cleaning_duty_redundant_assignments(self.pair_section_ranges)
-        # self.report_result(
-        #     self.n_redundant_assignments,
-        #     prefix="The number of redundant assignment pairs is"
-        # )
-        #
-        # self.n_overlapping_assigments = self.find_cleaning_duty_overlapping_assignments(self.pair_section_ranges)
-        # self.report_result(
-        #     self.n_overlapping_assigments,
-        #     prefix="The number of overlapping assignment pairs is"
-        # )
+        self.calories_lol = self.get_input_lol_of_calories()
+        self.max_individual_calories = self.find_max_of_calories(self.calories_lol)
+        self.report_result(
+            self.max_individual_calories,
+            prefix="The elf with the most calories has a total of",
+            suffix="calories."
+        )
+        self.max_calories_for_3_top_elves = self.find_max_of_top_3_calories_providers(self.calories_lol)
+        self.report_result(
+            self.max_calories_for_3_top_elves,
+            prefix="The top 3 elves with the most calories have a total of",
+            suffix=" calories."
+
+        )
+
+        self.rucksacks_inventories = self.get_input_rucksacks_iventory()
+        self.priority_sum = self.find_priority_sum_of_misplaced_items(self.rucksacks_inventories)
+        self.report_result(
+            self.priority_sum,
+            prefix="The sum of the priority of items misplaced in rucksacks is"
+        )
+        self.priority_sum_badges = self.find_priority_sum_of_badges_items(self.rucksacks_inventories)
+        self.report_result(
+            self.priority_sum_badges,
+            prefix="The sum of the priority of badges items in rucksacks is"
+        )
+
+        self.pair_section_ranges = self.get_input_cleaning_duty_sections_assignments()
+        self.n_redundant_assignments = self.find_cleaning_duty_redundant_assignments(self.pair_section_ranges)
+        self.report_result(
+            self.n_redundant_assignments,
+            prefix="The number of redundant assignment pairs is"
+        )
+
+        self.n_overlapping_assigments = self.find_cleaning_duty_overlapping_assignments(self.pair_section_ranges)
+        self.report_result(
+            self.n_overlapping_assigments,
+            prefix="The number of overlapping assignment pairs is"
+        )
 
         self.d5_stacks, self.d5_program = self.get_input_crates_rearrangement_planning()
         self.top_crates_9000 = self.find_top_crates_after_rearrangement(self.d5_stacks, self.d5_program)
@@ -81,9 +81,19 @@ class ExpeditionLeader:
             self.top_crates_9001,
             prefix="The top crates after rearrangement with crane model 9001 are"
         )
+
+        self.d6_datastream = self.get_input_d6_datasream_buffer()
+        self.n_char_before_sop = self.count_chars_before_marker(self.d6_datastream, 4)
+        self.report_result(
+            self.n_char_before_sop,
+            prefix="The number of characters in the datasream buffer before start-of-packet marker is"
+        )
+        self.n_char_before_som = self.count_chars_before_marker(self.d6_datastream, 14)
+        self.report_result(
+            self.n_char_before_som,
+            prefix="The number of characters in the datasream buffer before start-of-message marker is"
+        )
         self.report_end()
-
-
 
     def get_input_lol_of_calories(self) -> list:
         """"""
@@ -137,6 +147,13 @@ class ExpeditionLeader:
         moves = [re.search("move ([0-9]+) from ([0-9]) to ([0-9])", line).groups() for line in program_raw]
 
         return stacks, moves
+
+    def get_input_d6_datasream_buffer(self) -> str:
+        input_file = self.inputs_dir / 'd6_datastream_buffer.txt'
+        with open(input_file, 'r') as f:
+            data = f.read()
+
+        return data
 
     def find_max_of_calories(self, calories_lol):
         return max(sum(elf_calories) for elf_calories in calories_lol)
@@ -224,6 +241,13 @@ class ExpeditionLeader:
             top_crates += stack[-1]
 
         return top_crates
+
+    def count_chars_before_marker(self, dsb, marker_length):
+        for idx in range(marker_length, len(dsb)):
+            if len(set(dsb[idx-marker_length:idx]))==marker_length:
+                break
+        return idx
+
     def report_start(self):
         self.start = datetime.datetime.now()
         print(f'started the exploring at {self.start.strftime("%H:%M")}...')
