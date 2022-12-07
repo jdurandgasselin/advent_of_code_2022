@@ -7,6 +7,8 @@ from string import Formatter
 import re
 from itertools import zip_longest
 
+
+from advent_of_code_2022.folder_tree import Folder, File
 # from collections import Counter
 from datetime import timedelta
 # from typing import Union
@@ -30,68 +32,80 @@ class ExpeditionLeader:
     def do_some_exploring(self):
         self.report_start()
 
-        self.calories_lol = self.get_input_lol_of_calories()
-        self.max_individual_calories = self.find_max_of_calories(self.calories_lol)
+        # self.calories_lol = self.get_input_lol_of_calories()
+        # self.max_individual_calories = self.find_max_of_calories(self.calories_lol)
+        # self.report_result(
+        #     self.max_individual_calories,
+        #     prefix="The elf with the most calories has a total of",
+        #     suffix="calories."
+        # )
+        # self.max_calories_for_3_top_elves = self.find_max_of_top_3_calories_providers(self.calories_lol)
+        # self.report_result(
+        #     self.max_calories_for_3_top_elves,
+        #     prefix="The top 3 elves with the most calories have a total of",
+        #     suffix=" calories."
+        #
+        # )
+        #
+        # self.rucksacks_inventories = self.get_input_rucksacks_iventory()
+        # self.priority_sum = self.find_priority_sum_of_misplaced_items(self.rucksacks_inventories)
+        # self.report_result(
+        #     self.priority_sum,
+        #     prefix="The sum of the priority of items misplaced in rucksacks is"
+        # )
+        # self.priority_sum_badges = self.find_priority_sum_of_badges_items(self.rucksacks_inventories)
+        # self.report_result(
+        #     self.priority_sum_badges,
+        #     prefix="The sum of the priority of badges items in rucksacks is"
+        # )
+        #
+        # self.pair_section_ranges = self.get_input_cleaning_duty_sections_assignments()
+        # self.n_redundant_assignments = self.find_cleaning_duty_redundant_assignments(self.pair_section_ranges)
+        # self.report_result(
+        #     self.n_redundant_assignments,
+        #     prefix="The number of redundant assignment pairs is"
+        # )
+        #
+        # self.n_overlapping_assigments = self.find_cleaning_duty_overlapping_assignments(self.pair_section_ranges)
+        # self.report_result(
+        #     self.n_overlapping_assigments,
+        #     prefix="The number of overlapping assignment pairs is"
+        # )
+        #
+        # self.d5_stacks, self.d5_program = self.get_input_crates_rearrangement_planning()
+        # self.top_crates_9000 = self.find_top_crates_after_rearrangement(self.d5_stacks, self.d5_program)
+        # self.report_result(
+        #     self.top_crates_9000,
+        #     prefix="The top crates after rearrangement with crane model 9000 are"
+        # )
+        # self.top_crates_9001 = self.find_top_crates_after_rearrangement(self.d5_stacks, self.d5_program, crane_model=9001)
+        # self.report_result(
+        #     self.top_crates_9001,
+        #     prefix="The top crates after rearrangement with crane model 9001 are"
+        # )
+        #
+        # self.d6_datastream = self.get_input_d6_datasream_buffer()
+        # self.n_char_before_sop = self.count_chars_before_marker(self.d6_datastream, 4)
+        # self.report_result(
+        #     self.n_char_before_sop,
+        #     prefix="The number of characters in the datasream buffer before start-of-packet marker is"
+        # )
+        # self.n_char_before_som = self.count_chars_before_marker(self.d6_datastream, 14)
+        # self.report_result(
+        #     self.n_char_before_som,
+        #     prefix="The number of characters in the datasream buffer before start-of-message marker is"
+        # )
+        self.d7_terminal_output = self.get_input_d7_terminal_output()
+        self.dir_tree = self.build_directory_tree_from_temrinal_output(self.d7_terminal_output)
+        self.cum_size_folder_below_1e4 = self.calc_cum_size_folders_in_dir_tree(self.dir_tree, 1e5)
         self.report_result(
-            self.max_individual_calories,
-            prefix="The elf with the most calories has a total of",
-            suffix="calories."
+            self.cum_size_folder_below_1e4,
+            prefix="the cumulative size of folders with size <1e4 is "
         )
-        self.max_calories_for_3_top_elves = self.find_max_of_top_3_calories_providers(self.calories_lol)
+        self.smallest_dir_to_delete = self.find_smallest_dire_to_delete(self.dir_tree)
         self.report_result(
-            self.max_calories_for_3_top_elves,
-            prefix="The top 3 elves with the most calories have a total of",
-            suffix=" calories."
-
-        )
-
-        self.rucksacks_inventories = self.get_input_rucksacks_iventory()
-        self.priority_sum = self.find_priority_sum_of_misplaced_items(self.rucksacks_inventories)
-        self.report_result(
-            self.priority_sum,
-            prefix="The sum of the priority of items misplaced in rucksacks is"
-        )
-        self.priority_sum_badges = self.find_priority_sum_of_badges_items(self.rucksacks_inventories)
-        self.report_result(
-            self.priority_sum_badges,
-            prefix="The sum of the priority of badges items in rucksacks is"
-        )
-
-        self.pair_section_ranges = self.get_input_cleaning_duty_sections_assignments()
-        self.n_redundant_assignments = self.find_cleaning_duty_redundant_assignments(self.pair_section_ranges)
-        self.report_result(
-            self.n_redundant_assignments,
-            prefix="The number of redundant assignment pairs is"
-        )
-
-        self.n_overlapping_assigments = self.find_cleaning_duty_overlapping_assignments(self.pair_section_ranges)
-        self.report_result(
-            self.n_overlapping_assigments,
-            prefix="The number of overlapping assignment pairs is"
-        )
-
-        self.d5_stacks, self.d5_program = self.get_input_crates_rearrangement_planning()
-        self.top_crates_9000 = self.find_top_crates_after_rearrangement(self.d5_stacks, self.d5_program)
-        self.report_result(
-            self.top_crates_9000,
-            prefix="The top crates after rearrangement with crane model 9000 are"
-        )
-        self.top_crates_9001 = self.find_top_crates_after_rearrangement(self.d5_stacks, self.d5_program, crane_model=9001)
-        self.report_result(
-            self.top_crates_9001,
-            prefix="The top crates after rearrangement with crane model 9001 are"
-        )
-
-        self.d6_datastream = self.get_input_d6_datasream_buffer()
-        self.n_char_before_sop = self.count_chars_before_marker(self.d6_datastream, 4)
-        self.report_result(
-            self.n_char_before_sop,
-            prefix="The number of characters in the datasream buffer before start-of-packet marker is"
-        )
-        self.n_char_before_som = self.count_chars_before_marker(self.d6_datastream, 14)
-        self.report_result(
-            self.n_char_before_som,
-            prefix="The number of characters in the datasream buffer before start-of-message marker is"
+            self.smallest_dir_to_delete,
+            prefix="the size of the smallest folder to delete to reach sufficent free space is"
         )
         self.report_end()
 
@@ -154,6 +168,15 @@ class ExpeditionLeader:
             data = f.read()
 
         return data
+
+    def get_input_d7_terminal_output(self) -> list:
+        input_file = self.inputs_dir / 'd7_terminal_output.txt'
+        with open(input_file, 'r') as f:
+            data = f.read()
+
+        res = data.split('$')
+        res = [[e.strip('\n').lstrip() for e in c.split('\n', 1)] for c in res if c != '']
+        return res
 
     def find_max_of_calories(self, calories_lol):
         return max(sum(elf_calories) for elf_calories in calories_lol)
@@ -241,6 +264,67 @@ class ExpeditionLeader:
             top_crates += stack[-1]
 
         return top_crates
+
+    def build_directory_tree_from_temrinal_output(self, to_lst):
+        """"""
+        root = Folder('/', None)
+        cwd = root
+        for cmd, out in to_lst:
+
+            # cd command
+            if cmd.startswith('cd'):
+                m = re.match('cd ([a-zA-Z\./]+)', cmd)
+                dir_name = m.groups()[0]
+                if all(c == '.' for c in dir_name):
+                    cwd = cwd.parents[dir_name.count('.') -2]
+                elif dir_name in cwd.subs_dict.keys():
+                    cwd = cwd.subs_dict[dir_name]
+                else:
+                    assert dir_name == cwd.name
+
+            # ls command
+            elif cmd.startswith('ls'):
+                contents_raw = [c for c in out.split('\n') if c!= '']
+                for c in contents_raw:
+                    if c.startswith('dir'):
+                        c_dir_name = c.split(' ')[1].strip()
+                        cwd.add_sub(Folder(name=c_dir_name, parent=cwd))
+                    else:
+                        size, c_file_name = c.split(' ')
+                        cwd.add_sub(File(name=c_file_name, parent=cwd, size=int(size.strip())))
+
+        return root
+
+    def sort_directories_by_size(self, root: Folder):
+        dirs_sizes = [(root.name, root.size)]
+
+        for sub in root.subs:
+            if isinstance(sub, Folder):
+                dirs_sizes.extend(self.sort_directories_by_size(sub))
+
+        return sorted(dirs_sizes, key=lambda x: x[1])
+
+    def find_smallest_dire_to_delete(self, root):
+        sorted_dirs_size = self.sort_directories_by_size(root)
+
+        # find space to remove
+        to_remove = root.size - 40e6
+
+        res = min([d[1] for d in sorted_dirs_size if d[1] > to_remove])
+        return res
+
+    def calc_cum_size_folders_in_dir_tree(self, root, threshold):
+        total = 0
+        print(root.size)
+        if root.size <= threshold:
+            total += root.size
+
+        if isinstance(root, Folder):
+            for sub in root.subs:
+                if isinstance(sub, Folder):
+                    total += self.calc_cum_size_folders_in_dir_tree(sub, threshold)
+
+        return total
 
     def count_chars_before_marker(self, dsb, marker_length):
         for idx in range(marker_length, len(dsb)):
