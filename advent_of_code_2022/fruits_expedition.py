@@ -2,6 +2,9 @@ import copy
 import datetime
 import string
 from pathlib import Path
+
+import numpy as np
+import pandas as pd
 from colorama import Fore
 from string import Formatter
 import re
@@ -95,17 +98,29 @@ class ExpeditionLeader:
         #     self.n_char_before_som,
         #     prefix="The number of characters in the datasream buffer before start-of-message marker is"
         # )
-        self.d7_terminal_output = self.get_input_d7_terminal_output()
-        self.dir_tree = self.build_directory_tree_from_temrinal_output(self.d7_terminal_output)
-        self.cum_size_folder_below_1e4 = self.calc_cum_size_folders_in_dir_tree(self.dir_tree, 1e5)
+        # self.d7_terminal_output = self.get_input_d7_terminal_output()
+        # self.dir_tree = self.build_directory_tree_from_temrinal_output(self.d7_terminal_output)
+        # self.cum_size_folder_below_1e4 = self.calc_cum_size_folders_in_dir_tree(self.dir_tree, 1e5)
+        # self.report_result(
+        #     self.cum_size_folder_below_1e4,
+        #     prefix="the cumulative size of folders with size <1e4 is "
+        # )
+        # self.smallest_dir_to_delete = self.find_smallest_dire_to_delete(self.dir_tree)
+        # self.report_result(
+        #     self.smallest_dir_to_delete,
+        #     prefix="the size of the smallest folder to delete to reach sufficent free space is"
+        # )
+
+        self.d8_tree_height_map = self.get_input_d8_tress_height_map()
+        self.number_visible_trees = self.find_number_of_visible_trees_from_map(self.d8_tree_height_map)
         self.report_result(
-            self.cum_size_folder_below_1e4,
-            prefix="the cumulative size of folders with size <1e4 is "
+            self.number_visible_trees,
+            prefix="The number of visible tree is"
         )
-        self.smallest_dir_to_delete = self.find_smallest_dire_to_delete(self.dir_tree)
+        self.max_scenic_score = self.find_highest_scenic_score(self.d8_tree_height_map)
         self.report_result(
-            self.smallest_dir_to_delete,
-            prefix="the size of the smallest folder to delete to reach sufficent free space is"
+            self.max_scenic_score,
+            prefix="The maximum scenic score among trees is"
         )
         self.report_end()
 
@@ -176,6 +191,15 @@ class ExpeditionLeader:
 
         res = data.split('$')
         res = [[e.strip('\n').lstrip() for e in c.split('\n', 1)] for c in res if c != '']
+        return res
+
+    def get_input_d8_tress_height_map(self):
+        input_file = self.inputs_dir / 'd8_trees_height_map.txt'
+        with open(input_file, 'r') as f:
+            data_str = f.read()
+
+        data = [[int(d) for d in line] for line in data_str.split('\n')]
+        res = pd.DataFrame(data, columns=list(range(len(data[0]))))
         return res
 
     def find_max_of_calories(self, calories_lol):
@@ -332,6 +356,82 @@ class ExpeditionLeader:
                 break
         return idx
 
+    def find_number_of_visible_trees_from_map(self, thm: pd.DataFrame):
+
+        nr, nc = thm.shape
+
+        # all trees on the edges are visible
+        res = 2*nr + 2*nc - 4
+
+        for i in range(1, nr-1):
+            for j in range(1, nc-1):
+                # same column, above
+                is_visible = (thm.iloc[0:i, j] < thm.iloc[i,j]).all()
+
+                # same column, below
+                is_visible = is_visible or (thm.iloc[i+1:, j] < thm.iloc[i, j]).all()
+
+                # same row, left side
+                is_visible = is_visible or (thm.iloc[i, 0:j] < thm.iloc[i, j]).all()
+
+                # same row, right side
+                is_visible = is_visible or (thm.iloc[i, j+1:] < thm.iloc[i, j]).all()
+
+                if is_visible:
+                    res += 1
+
+        return res
+
+    def find_highest_scenic_score(self, thm):
+        nr, nc = thm.shape
+        # edge tress have a scenic score product of 0
+        scenic_score_products = pd.DataFrame(index=thm.index, columns=thm.columns, data=np.zeros((nr, nc)))
+
+        for i in range(1, nr-1):
+            for j in range(1, nc-1):
+                v = thm.iloc[i,j]
+
+                # left
+                scl = 0
+                for jl in range(j-1, -1, -1):
+                    if thm.iloc[i, jl] <= v:
+                        scl += 1
+
+                    if thm.iloc[i, jl] >= v:
+                        break
+
+                # right
+                scr = 0
+                for jr in range(j+1, nc):
+                    if thm.iloc[i, jr] <= v:
+                        scr += 1
+
+                    if thm.iloc[i, jr] >= v:
+                        break
+
+                # above
+                sca = 0
+                for ia in range(i-1, -1, -1):
+                    if thm.iloc[ia, j] <= v:
+                        sca += 1
+
+                    if thm.iloc[ia, j] >= v:
+                        break
+
+                # below
+                scb = 0
+                for ib in range(i+1, nr):
+                    if thm.iloc[ib, j] <= v:
+                        scb += 1
+
+                    if thm.iloc[ib, j] >= v:
+                        break
+
+                assert scr+scl < nr
+                assert sca+scb < nc
+
+                scenic_score_products.iloc[i, j] = scl * scr * sca * scb
+        return scenic_score_products.max().max()
     def report_start(self):
         self.start = datetime.datetime.now()
         print(f'started the exploring at {self.start.strftime("%H:%M")}...')
