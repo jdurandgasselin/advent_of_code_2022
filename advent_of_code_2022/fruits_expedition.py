@@ -2,7 +2,6 @@ import copy
 import datetime
 import string
 from pathlib import Path
-
 import numpy as np
 import pandas as pd
 from colorama import Fore
@@ -110,17 +109,27 @@ class ExpeditionLeader:
         #     self.smallest_dir_to_delete,
         #     prefix="the size of the smallest folder to delete to reach sufficent free space is"
         # )
-
-        self.d8_tree_height_map = self.get_input_d8_tress_height_map()
-        self.number_visible_trees = self.find_number_of_visible_trees_from_map(self.d8_tree_height_map)
+        # self.d8_tree_height_map = self.get_input_d8_tress_height_map()
+        # self.number_visible_trees = self.find_number_of_visible_trees_from_map(self.d8_tree_height_map)
+        # self.report_result(
+        #     self.number_visible_trees,
+        #     prefix="The number of visible tree is"
+        # )
+        # self.max_scenic_score = self.find_highest_scenic_score(self.d8_tree_height_map)
+        # self.report_result(
+        #     self.max_scenic_score,
+        #     prefix="The maximum scenic score among trees is"
+        # )
+        self.d9_moves = self.get_input_d9_head_moves()
+        self.n_pos_visited_by_tail = self.find_number_of_pos_visited_by_tail(self.d9_moves)
         self.report_result(
-            self.number_visible_trees,
-            prefix="The number of visible tree is"
+            self.n_pos_visited_by_tail,
+            prefix="The number positions visited by thye tail when following the head is"
         )
-        self.max_scenic_score = self.find_highest_scenic_score(self.d8_tree_height_map)
+        self.n_pos_visited_by_tail_longer_rope = self.find_number_of_pos_visited_by_tail_longer_rope(self.d9_moves)
         self.report_result(
-            self.max_scenic_score,
-            prefix="The maximum scenic score among trees is"
+            self.n_pos_visited_by_tail_longer_rope,
+            prefix="The number positions visited by the tail of the long rope is"
         )
         self.report_end()
 
@@ -201,6 +210,14 @@ class ExpeditionLeader:
         data = [[int(d) for d in line] for line in data_str.split('\n')]
         res = pd.DataFrame(data, columns=list(range(len(data[0]))))
         return res
+
+    def get_input_d9_head_moves(self):
+        input_file = self.inputs_dir / 'd9_head_moves.txt'
+        with open(input_file, 'r') as f:
+            data_raw = f.read()
+
+        moves_raw = [l.rstrip().split(' ') for l in data_raw.split('\n')]
+        return [(mr[0], int(mr[1])) for mr in moves_raw]
 
     def find_max_of_calories(self, calories_lol):
         return max(sum(elf_calories) for elf_calories in calories_lol)
@@ -432,6 +449,107 @@ class ExpeditionLeader:
 
                 scenic_score_products.iloc[i, j] = scl * scr * sca * scb
         return scenic_score_products.max().max()
+
+    def find_number_of_pos_visited_by_tail(self, hms):
+
+        def are_adjacent(p1, p2):
+            return abs(p1[0]- p2[0]) <= 1 and abs(p1[1] - p2[1]) <=1
+
+        def sign(x):
+            return - 1 if x < 0 else 1
+
+        v = np.array
+        direction2vector = {
+            'L': v([-1, 0]),
+            'R': v([1, 0]),
+            'U': v([0, 1]),
+            'D': v([0,-1]),
+        }
+
+        # head strats at 0,0
+        hpos = v([0, 0])
+        tpos =v([0, 0])
+        tail_positions = set()
+        tail_positions.add(tuple(tpos))
+
+        for d, n in hms:
+            unit_move = direction2vector[d]
+            # apply by increments of 1
+            for _ in range(n):
+                # apply move on head
+                hpos += unit_move
+
+                # move tail if not adjacent to head
+                if not are_adjacent(hpos, tpos):
+                    dx, dy = hpos - tpos
+                    # diagonal spacing => diagonal move
+                    if abs(dx)>=1 and abs(dy)>=1:
+                        dtx = max(abs(dx)-1, 1) * sign(dx)
+                        dty = max(abs(dy)-1, 1) * sign(dy)
+
+                    # hor. or vert. spacing => hor. or vert. move
+                    else:
+                        dtx = max(abs(dx)-1, 0) * sign(dx)
+                        dty = max(abs(dy)-1, 0) * sign(dy)
+
+                    tpos += v([dtx, dty])
+                    tail_positions.add(tuple(tpos))
+
+        return len(tail_positions)
+
+    def find_number_of_pos_visited_by_tail_longer_rope(self, hms):
+
+        def are_adjacent(p1, p2):
+            return abs(p1[0]- p2[0]) <= 1 and abs(p1[1] - p2[1]) <=1
+
+        def sign(x):
+            return - 1 if x < 0 else 1
+
+        v = np.array
+        direction2vector = {
+            'L': v([-1, 0]),
+            'R': v([1, 0]),
+            'U': v([0, 1]),
+            'D': v([0,-1]),
+        }
+
+        # head strats at 0,0
+        hpos = v([0, 0])
+        tpos_lst =[v([0, 0]) for _ in range(9)]
+        tail_positions = set()
+        tail_positions.add(tuple(tpos_lst[-1]))
+
+        for d, n in hms:
+            unit_move = direction2vector[d]
+            # apply by increments of 1
+            for _ in range(n):
+                # apply move on head
+                hpos += unit_move
+
+                # apply following motion on each node
+                previous = hpos
+                for tpos_iter in tpos_lst:
+                    # move tail if not adjacent to head
+                    if not are_adjacent(previous, tpos_iter):
+                        dx, dy = previous - tpos_iter
+                        # diagonal spacing => diagonal move
+                        if abs(dx)>=1 and abs(dy)>=1:
+                            dtx = max(abs(dx)-1, 1) * sign(dx)
+                            dty = max(abs(dy)-1, 1) * sign(dy)
+
+                        # hor. or vert. spacing => hor. or vert. move
+                        else:
+                            dtx = max(abs(dx)-1, 0) * sign(dx)
+                            dty = max(abs(dy)-1, 0) * sign(dy)
+
+                        tpos_iter += v([dtx, dty])
+
+                    previous = tpos_iter
+
+                tail_positions.add(tuple(tpos_iter))
+
+        return len(tail_positions)
+
     def report_start(self):
         self.start = datetime.datetime.now()
         print(f'started the exploring at {self.start.strftime("%H:%M")}...')
